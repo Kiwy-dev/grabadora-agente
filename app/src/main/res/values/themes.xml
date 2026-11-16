@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cap. 2 del libro: estilos y temas -->
+<resources>
+    <style name="Theme.Grabadora" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#C2185B</item>
+        <item name="colorSecondary">#6A1B9A</item>
+    </style>
+    <color name="icono_fondo">#C2185B</color>
+</resources>
