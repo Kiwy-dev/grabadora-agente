@@ -27,7 +27,7 @@ GrabadoraAgente/
 Requisitos: un teléfono con **Android 8.0 o superior**.
 
 **Opción A: copiando el APK al teléfono**
-1. Descarga `GrabadoraAgente-0.1-debug.apk` de la sección **Releases** del repositorio y pásalo al teléfono (por cable, Drive, WhatsApp, etc.).
+1. Descarga `GrabadoraAgente-0.3-debug.apk` de la sección **Releases** del repositorio y pásalo al teléfono (por cable, Drive, WhatsApp, etc.).
 2. Ábrelo desde el gestor de archivos.
 3. Si Android lo bloquea, permite **"Instalar apps desconocidas"** para esa app y vuelve a abrirlo.
 
@@ -35,7 +35,7 @@ Requisitos: un teléfono con **Android 8.0 o superior**.
 1. En el teléfono activa **Opciones de desarrollador → Depuración USB** y conéctalo por cable.
 2. Ejecuta:
    ```
-   adb install -r GrabadoraAgente-0.1-debug.apk
+   adb install -r GrabadoraAgente-0.3-debug.apk
    ```
 
 > Es una versión *debug* firmada con una clave de desarrollo. Sirve para probar y compartir,
