@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- getExternalFilesDir(Environment.DIRECTORY_MUSIC)/Grabaciones -->
+    <external-files-path name="grabaciones" path="Music/Grabaciones/" />
+    <!-- Respaldo si no hay almacenamiento externo (filesDir/Grabaciones) -->
+    <files-path name="grabaciones_internas" path="Grabaciones/" />
+</paths>

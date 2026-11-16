@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/nueva_carpeta"
+        android:title="@string/nueva_carpeta"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/borrar_carpeta"
+        android:title="@string/borrar_carpeta"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/diagnostico"
+        android:title="@string/copiar_diagnostico"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/ajustes"
+        android:title="@string/ajustes"
+        app:showAsAction="never" />
+</menu>

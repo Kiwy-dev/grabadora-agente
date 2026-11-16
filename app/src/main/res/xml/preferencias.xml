@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="@string/cat_palabra">
+        <EditTextPreference
+            app:defaultValue="oye grabadora"
+            app:key="palabra_clave"
+            app:title="@string/pref_palabra"
+            app:useSimpleSummaryProvider="true" />
+        <EditTextPreference
+            app:defaultValue="Por voz"
+            app:key="carpeta_voz"
+            app:title="@string/pref_carpeta_voz"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cat_grabacion">
+        <ListPreference
+            app:defaultValue="3"
+            app:entries="@array/silencio_textos"
+            app:entryValues="@array/silencio_valores"
+            app:key="segundos_silencio"
+            app:title="@string/pref_silencio"
+            app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:defaultValue="60"
+            app:entries="@array/maximo_textos"
+            app:entryValues="@array/maximo_valores"
+            app:key="segundos_maximo"
+            app:title="@string/pref_maximo"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/cat_ahorro">
+        <ListPreference
+            app:defaultValue="10"
+            app:entries="@array/inactividad_textos"
+            app:entryValues="@array/inactividad_valores"
+            app:key="minutos_inactividad"
+            app:title="@string/pref_inactividad"
+            app:useSimpleSummaryProvider="true" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="pausar_pantalla_apagada"
+            app:summary="@string/pref_pantalla_resumen"
+            app:title="@string/pref_pantalla" />
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="solo_cargando"
+            app:summary="@string/pref_cargando_resumen"
+            app:title="@string/pref_cargando" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="parar_bateria_baja"
+            app:title="@string/pref_bateria" />
+    </PreferenceCategory>
+</PreferenceScreen>

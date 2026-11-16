@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Grabadora Agente</string>
+
+    <!-- Pantalla principal -->
+    <string name="escucha_palabra_clave">Escuchar palabra clave</string>
+    <string name="grabar">Grabar</string>
+    <string name="detener">Detener</string>
+    <string name="vacio">No hay audios en esta carpeta.\nPulsa Grabar o activa la escucha.</string>
+    <string name="grabando_manual">● Grabando… %1$s</string>
+    <string name="por_voz">por voz</string>
+    <string name="reproducir">Reproducir</string>
+    <string name="opciones">Opciones</string>
+    <string name="apaga_escucha_primero">Apaga la escucha antes de grabar a mano (el micrófono está ocupado).</string>
+    <string name="sin_permiso_mic">Sin permiso de micrófono no se puede grabar.</string>
+    <string name="error_grabar">No se pudo iniciar la grabación.</string>
+    <string name="error_reproducir">No se pudo reproducir el audio.</string>
+
+    <!-- Carpetas y acciones -->
+    <string name="nueva_carpeta">Nueva carpeta</string>
+    <string name="nueva_carpeta_puntos">+ Nueva carpeta…</string>
+    <string name="borrar_carpeta">Borrar carpeta actual</string>
+    <string name="nombre_carpeta">Nombre de la carpeta</string>
+    <string name="crear">Crear</string>
+    <string name="carpeta_invalida">Nombre no válido o la carpeta ya existe.</string>
+    <string name="no_borrar_general">La carpeta General no se puede borrar.</string>
+    <string name="carpeta_no_vacia">Solo se pueden borrar carpetas vacías. Mueve o borra sus audios primero.</string>
+    <string name="confirmar_borrar_carpeta">¿Borrar la carpeta «%1$s»?</string>
+    <string name="compartir">Compartir</string>
+    <string name="mover_carpeta">Mover a carpeta</string>
+    <string name="mover_a">Mover a…</string>
+    <string name="movido_a">Movido a %1$s</string>
+    <string name="error_mover">No se pudo mover el audio.</string>
+    <string name="renombrar">Renombrar</string>
+    <string name="nombre_invalido">Nombre no válido.</string>
+    <string name="borrar">Borrar</string>
+    <string name="confirmar_borrar">¿Borrar «%1$s»? No se puede deshacer.</string>
+
+    <!-- Estados del agente -->
+    <string name="estado_apagado">Apagado</string>
+    <string name="estado_preparando">Preparando el reconocimiento de voz…</string>
+    <string name="estado_escuchando">Escuchando: di «%1$s»</string>
+    <string name="estado_grabando_voz">● Grabando (se detiene al haber silencio)</string>
+    <string name="estado_pausa_pantalla">En pausa: pantalla apagada</string>
+    <string name="motivo_inactividad">Apagado: %1$d min sin oír la palabra clave</string>
+    <string name="motivo_bateria">Apagado: batería baja</string>
+    <string name="motivo_cargador">Apagado: se desconectó el cargador</string>
+    <string name="motivo_solo_cargando">No arrancó: está configurado para funcionar solo mientras carga</string>
+    <string name="motivo_sin_modelo">Esta versión de la app no trae el modelo de voz. Instala la APK completa (~100 MB).</string>
+    <string name="motivo_error_modelo">No se pudo cargar el modelo de voz: %1$s</string>
+    <string name="modelo_preparando">Preparando el modelo de voz (solo la primera vez)…</string>
+    <string name="modelo_sin_espacio">No hay espacio para el modelo de voz. Libera %1$d MB y pulsa Reintentar.</string>
+    <string name="modelo_incompatible">Este teléfono no es compatible con el reconocimiento de voz sin internet (%1$s).</string>
+    <string name="reintentar">Reintentar</string>
+    <string name="detener_grabacion">Detener grabación</string>
+    <string name="copiar_diagnostico">Copiar diagnóstico</string>
+    <string name="diagnostico_copiado">Diagnóstico copiado. Pégalo en un mensaje para soporte.</string>
+    <string name="motivo_microfono">Apagado: error con el micrófono</string>
+    <string name="motivo_microfono_detalle">Apagado: error con el micrófono (%1$s)</string>
+    <string name="motivo_no_permitido">Android no permitió iniciar la escucha. Ábrela desde la app.</string>
+    <string name="canal_agente">Escucha por palabra clave</string>
+
+    <!-- Mosaico de ajustes rápidos -->
+    <string name="tile_label">Grabadora</string>
+    <string name="tile_preparando">Preparando</string>
+    <string name="tile_escuchando">Escuchando</string>
+    <string name="tile_pausado">En pausa</string>
+    <string name="tile_grabando">Grabando</string>
+
+    <!-- Ajustes -->
+    <string name="ajustes">Ajustes</string>
+    <string name="cat_palabra">Palabra clave</string>
+    <string name="pref_palabra">Palabra o frase</string>
+    <string name="pref_palabra_resumen">Usa palabras comunes en español; 2 o 3 palabras dan menos falsos positivos.</string>
+    <string name="pref_carpeta_voz">Carpeta para grabaciones por voz</string>
+    <string name="cat_grabacion">Grabación</string>
+    <string name="pref_silencio">Detener tras silencio de</string>
+    <string name="pref_maximo">Duración máxima</string>
+    <string name="cat_ahorro">Ahorro de batería (no estar activo 24/7)</string>
+    <string name="pref_inactividad">Apagar tras sin oír la palabra clave</string>
+    <string name="pref_pantalla">Pausar con la pantalla apagada</string>
+    <string name="pref_pantalla_resumen">Se reanuda al encender la pantalla</string>
+    <string name="pref_cargando">Solo mientras se carga</string>
+    <string name="pref_cargando_resumen">Se apaga al desconectar el cargador</string>
+    <string name="pref_bateria">Apagar con batería baja</string>
+
+    <string-array name="inactividad_textos">
+        <item>5 minutos</item>
+        <item>10 minutos</item>
+        <item>30 minutos</item>
+        <item>1 hora</item>
+        <item>Sin límite</item>
+    </string-array>
+    <string-array name="inactividad_valores">
+        <item>5</item>
+        <item>10</item>
+        <item>30</item>
+        <item>60</item>
+        <item>0</item>
+    </string-array>
+    <string-array name="silencio_textos">
+        <item>2 segundos</item>
+        <item>3 segundos</item>
+        <item>5 segundos</item>
+        <item>10 segundos</item>
+    </string-array>
+    <string-array name="silencio_valores">
+        <item>2</item>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+    </string-array>
+    <string-array name="maximo_textos">
+        <item>30 segundos</item>
+        <item>1 minuto</item>
+        <item>5 minutos</item>
+        <item>15 minutos</item>
+    </string-array>
+    <string-array name="maximo_valores">
+        <item>30</item>
+        <item>60</item>
+        <item>300</item>
+        <item>900</item>
+    </string-array>
+</resources>
