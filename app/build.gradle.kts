@@ -11,8 +11,13 @@ android {
         applicationId = "com.grabadora.agente"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.3"
+        versionCode = 4
+        versionName = "0.4"
+
+        // Vosk/JNA traen librerías nativas para 7 arquitecturas (incluidas mips y armeabi, ya sin
+        // teléfonos). Solo empaquetamos las que existen hoy: arm64 (casi todos los teléfonos),
+        // armeabi-v7a (teléfonos de 32 bits) y x86_64 (emulador). Baja el tamaño del APK.
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
     }
 
     buildTypes {

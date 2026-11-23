@@ -6,23 +6,31 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.grabadora.agente.R
 import com.grabadora.agente.data.Audio
 import java.util.Date
 
-/** Cap. 3 del libro: RecyclerView con Adapter y ViewHolder. */
+/**
+ * Cap. 3 del libro: RecyclerView con Adapter y ViewHolder.
+ * Usa ListAdapter + DiffUtil: al cambiar la lista solo se redibujan las filas que cambiaron
+ * (antes notifyDataSetChanged redibujaba todo en cada grabación, borrado o reproducción).
+ */
 class AudioAdapter(
     private val alReproducir: (Audio) -> Unit,
     private val alMenu: (Audio, View) -> Unit,
-) : RecyclerView.Adapter<AudioAdapter.VH>() {
+) : ListAdapter<Audio, AudioAdapter.VH>(DIFERENCIAS) {
 
-    var audios: List<Audio> = emptyList()
-        set(v) { field = v; notifyDataSetChanged() }
-
-    /** id del audio que suena ahora (para cambiar el icono a "stop"). */
+    /** id del audio que suena ahora (para cambiar el icono a "stop"). Solo refresca las 2 filas afectadas. */
     var sonandoId: Long = -1
-        set(v) { field = v; notifyDataSetChanged() }
+        set(v) {
+            val anterior = field
+            field = v
+            if (anterior == v) return
+            currentList.forEachIndexed { i, a -> if (a.id == anterior || a.id == v) notifyItemChanged(i) }
+        }
 
     class VH(v: View) : RecyclerView.ViewHolder(v) {
         val nombre: TextView = v.findViewById(R.id.nombre)
@@ -34,10 +42,8 @@ class AudioAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
         VH(LayoutInflater.from(parent.context).inflate(R.layout.item_audio, parent, false))
 
-    override fun getItemCount() = audios.size
-
     override fun onBindViewHolder(h: VH, pos: Int) {
-        val a = audios[pos]
+        val a = getItem(pos)
         val ctx = h.itemView.context
         h.nombre.text = a.nombre
         val fecha = DateFormat.getMediumDateFormat(ctx).format(Date(a.fecha)) + " " +
@@ -51,6 +57,11 @@ class AudioAdapter(
     }
 
     companion object {
+        private val DIFERENCIAS = object : DiffUtil.ItemCallback<Audio>() {
+            override fun areItemsTheSame(a: Audio, b: Audio) = a.id == b.id
+            override fun areContentsTheSame(a: Audio, b: Audio) = a == b
+        }
+
         fun duracion(ms: Long): String {
             val s = ms / 1000
             return "%d:%02d".format(s / 60, s % 60)

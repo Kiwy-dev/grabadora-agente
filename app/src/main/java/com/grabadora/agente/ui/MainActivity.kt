@@ -41,6 +41,7 @@ import com.grabadora.agente.agent.Prefs
 import com.grabadora.agente.data.Audio
 import com.grabadora.agente.data.AudioRepository
 import com.grabadora.agente.record.Recorder
+import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
@@ -64,8 +65,12 @@ class MainActivity : AppCompatActivity() {
 
     private var player: MediaPlayer? = null
     private var carpeta = AudioRepository.CARPETA_GENERAL
+    private var carpetas: List<String> = emptyList()
     private var cambiandoInterruptor = false
     private val handler = Handler(Looper.getMainLooper())
+
+    /** Disco y SQLite fuera del hilo principal (evita tirones con muchas grabaciones). Un solo hilo = en orden. */
+    private val io = Executors.newSingleThreadExecutor()
 
     private val reloj = object : Runnable {
         override fun run() {
@@ -186,6 +191,14 @@ class MainActivity : AppCompatActivity() {
         if (recorder.grabando) terminarGrabacionManual()
     }
 
+    override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
+        player?.release()
+        player = null
+        io.shutdown()
+        super.onDestroy()
+    }
+
     // ---------- Menú de la barra ----------
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -206,9 +219,21 @@ class MainActivity : AppCompatActivity() {
 
     // ---------- Lista y carpetas ----------
 
+    /** Lee carpetas y audios en el hilo `io` y pinta el resultado en el hilo principal. */
     private fun recargar() {
-        val carpetas = repo.carpetas()
-        if (carpeta !in carpetas) carpeta = AudioRepository.CARPETA_GENERAL
+        val pedida = carpeta
+        io.execute {
+            val lista = repo.carpetas()
+            val actual = if (pedida in lista) pedida else AudioRepository.CARPETA_GENERAL
+            val audios = repo.listar(actual)
+            handler.post { if (!isDestroyed) mostrar(lista, pedida, actual, audios) }
+        }
+    }
+
+    private fun mostrar(carpetas: List<String>, pedida: String, actual: String, audios: List<Audio>) {
+        if (carpeta != pedida) return // el usuario ya eligió otra carpeta; viene otra recarga
+        carpeta = actual
+        this.carpetas = carpetas
         chips.removeAllViews()
         carpetas.forEach { nombre ->
             val chip = Chip(this).apply {
@@ -223,8 +248,7 @@ class MainActivity : AppCompatActivity() {
             }
             chips.addView(chip)
         }
-        val audios = repo.listar(carpeta)
-        adapter.audios = audios
+        adapter.submitList(audios)
         vacio.visibility = if (audios.isEmpty()) View.VISIBLE else View.GONE
     }
 
@@ -244,7 +268,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun borrarCarpetaActual() {
         if (carpeta == AudioRepository.CARPETA_GENERAL) { aviso(R.string.no_borrar_general); return }
-        if (repo.listar(carpeta).isNotEmpty()) { aviso(R.string.carpeta_no_vacia); return }
+        if (adapter.currentList.isNotEmpty()) { aviso(R.string.carpeta_no_vacia); return }
         AlertDialog.Builder(this)
             .setMessage(getString(R.string.confirmar_borrar_carpeta, carpeta))
             .setPositiveButton(R.string.borrar) { _, _ -> repo.borrarCarpeta(carpeta) }
@@ -283,7 +307,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun elegirCarpetaDestino(audio: Audio) {
-        val otras = repo.carpetas().filter { it != audio.carpeta }
+        val otras = carpetas.filter { it != audio.carpeta }
         val opciones = (otras + getString(R.string.nueva_carpeta_puntos)).toTypedArray()
         AlertDialog.Builder(this)
             .setTitle(R.string.mover_a)
@@ -331,11 +355,13 @@ class MainActivity : AppCompatActivity() {
         detenerReproduccion()
         if (eraEste) return
         try {
+            // prepareAsync: no bloquea la pantalla mientras abre el archivo.
             player = MediaPlayer().apply {
                 setDataSource(audio.ruta)
+                setOnPreparedListener { it.start() }
                 setOnCompletionListener { detenerReproduccion() }
-                prepare()
-                start()
+                setOnErrorListener { _, _, _ -> detenerReproduccion(); aviso(R.string.error_reproducir); true }
+                prepareAsync()
             }
             adapter.sonandoId = audio.id
         } catch (e: Exception) {
@@ -362,7 +388,7 @@ class MainActivity : AppCompatActivity() {
         detenerReproduccion()
         try {
             recorder.iniciar(repo.nuevoArchivo(carpeta))
-        } catch (e: Exception) {
+        } catch (e: Exception) { // incluye IllegalStateException si ya grababa
             aviso(R.string.error_grabar)
             return
         }
@@ -397,7 +423,19 @@ class MainActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(this, faltan.toTypedArray(), PERMISO_ESCUCHAR)
             return
         }
-        KeywordService.iniciar(this)
+        iniciarAgente()
+    }
+
+    /** Android 12+ puede negar el servicio en primer plano; en vez de cerrarse, la app avisa. */
+    private fun iniciarAgente() {
+        try {
+            KeywordService.iniciar(this)
+        } catch (e: Exception) {
+            cambiandoInterruptor = true
+            interruptor.isChecked = false
+            cambiandoInterruptor = false
+            aviso(R.string.motivo_no_permitido)
+        }
     }
 
     // ---------- Cap. 7: permisos en tiempo de ejecución ----------
@@ -411,7 +449,7 @@ class MainActivity : AppCompatActivity() {
         if (!micOk) { aviso(R.string.sin_permiso_mic); return }
         when (requestCode) {
             PERMISO_GRABAR -> alternarGrabacion()
-            PERMISO_ESCUCHAR -> KeywordService.iniciar(this) // la notificación es opcional
+            PERMISO_ESCUCHAR -> iniciarAgente() // la notificación es opcional
         }
     }
 

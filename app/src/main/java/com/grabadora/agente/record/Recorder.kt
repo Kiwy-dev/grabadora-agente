@@ -24,6 +24,8 @@ class Recorder(private val context: Context) {
     val transcurridoMs: Long get() = if (grabando) SystemClock.elapsedRealtime() - inicio else 0
 
     fun iniciar(salida: File) {
+        // Un MediaRecorder a la vez: una segunda llamada dejaría el anterior sin liberar.
+        check(!grabando) { "Ya hay una grabación en curso" }
         val r = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(context)
         else @Suppress("DEPRECATION") MediaRecorder()
         try {

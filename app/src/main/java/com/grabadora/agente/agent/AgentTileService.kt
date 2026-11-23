@@ -23,6 +23,13 @@ class AgentTileService : TileService() {
             KeywordService.detener(this)
             return
         }
+        // Con el teléfono bloqueado, primero se pide desbloquear; si no, la actividad no se ve
+        // y Android no deja abrir el micrófono en primer plano.
+        if (isLocked) unlockAndRun { abrirArmar() } else abrirArmar()
+    }
+
+    @SuppressLint("StartActivityAndCollapseDeprecated")
+    private fun abrirArmar() {
         val i = Intent(this, ArmarActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (Build.VERSION.SDK_INT >= 34) {
             val pi = PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_IMMUTABLE)

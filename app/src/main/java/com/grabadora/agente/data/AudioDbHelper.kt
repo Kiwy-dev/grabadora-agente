@@ -20,8 +20,10 @@ class AudioDbHelper(context: Context) : SQLiteOpenHelper(context, "audios.db", n
         )
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS audios")
-        onCreate(db)
-    }
+    /**
+     * Migraciones. NUNCA borrar la tabla: los .m4a quedarían en disco sin registro e invisibles.
+     * Cuando subas la versión, agrega aquí un paso por versión, por ejemplo:
+     *   if (oldVersion < 2) db.execSQL("ALTER TABLE audios ADD COLUMN notas TEXT")
+     */
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 }

@@ -89,6 +89,16 @@ class KeywordService : Service(), RecognitionListener {
     private var pausadoPorPantalla = false
     private var silencioDesde = 0L
     private var palabra = ""
+    private var patronPalabra: Regex? = null
+
+    /** Carpeta elegida al EMPEZAR la grabación por voz; si el ajuste cambia a medias, no se separan archivo y registro. */
+    private var carpetaGrabacion = ""
+
+    /**
+     * Sube cada vez que el agente se libera. Una carga de modelo que termina después de
+     * apagar (o de un reinicio rápido) trae una generación vieja y cierra su Model en vez de usarlo.
+     */
+    private var generacion = 0
 
     private val repo get() = (application as AudioApp).repo
 
@@ -199,14 +209,17 @@ class KeywordService : Service(), RecognitionListener {
     private fun cargarModelo() {
         // ModeloManager copia el modelo (la primera vez), lo verifica y lo abre; si falla, reintenta una vez.
         // Corre en otro hilo porque abrir el modelo tarda unos segundos.
+        val miGeneracion = generacion
         hiloModelo.execute {
             val resultado = runCatching { ModeloManager.cargar(this) } // runCatching atrapa Throwable
             handler.post {
                 resultado.onSuccess { m ->
-                    if (!iniciado) { m.close(); return@post }
+                    // Se apagó (o reinició) mientras cargaba: cerramos para no fugar memoria nativa.
+                    if (!iniciado || miGeneracion != generacion) { m.close(); return@post }
                     model = m
                     if (pausadoPorPantalla) pausar(getString(R.string.estado_pausa_pantalla)) else escuchar()
                 }.onFailure { e ->
+                    if (!iniciado || miGeneracion != generacion) return@post
                     Log.e(TAG, "Modelo no disponible", e)
                     apagar(ModeloManager.mensaje(this, e))
                 }
@@ -218,6 +231,8 @@ class KeywordService : Service(), RecognitionListener {
         val m = model ?: return
         detenerEscucha()
         palabra = prefs.palabraClave
+        // Palabra completa, no subcadena: "oye grabadora" no debe dispararse con "oye grabadoras".
+        patronPalabra = Regex("(^|\\s)" + Regex.escape(palabra) + "(\\s|$)")
         try {
             // Gramática cerrada: solo reconoce la palabra clave o "[unk]" (cualquier otra cosa).
             // Así consume muy poco y casi no da falsos positivos.
@@ -242,8 +257,8 @@ class KeywordService : Service(), RecognitionListener {
     private fun revisar(json: String?) {
         if (json == null || recorder.grabando || speech == null) return
         val o = JSONObject(json)
-        val texto = o.optString("text", o.optString("partial", ""))
-        if (texto.contains(palabra)) handler.post { alOirPalabraClave() }
+        val texto = o.optString("text", o.optString("partial", "")).lowercase()
+        if (patronPalabra?.containsMatchIn(texto) == true) handler.post { alOirPalabraClave() }
     }
 
     override fun onPartialResult(hypothesis: String?) = revisar(hypothesis)
@@ -261,7 +276,8 @@ class KeywordService : Service(), RecognitionListener {
     private fun alOirPalabraClave() {
         if (recorder.grabando || speech == null) return
         detenerEscucha() // libera el micrófono para MediaRecorder
-        val archivo = repo.nuevoArchivo(prefs.carpetaVoz)
+        carpetaGrabacion = prefs.carpetaVoz
+        val archivo = repo.nuevoArchivo(carpetaGrabacion)
         try {
             recorder.iniciar(archivo)
         } catch (e: Exception) {
@@ -278,7 +294,7 @@ class KeywordService : Service(), RecognitionListener {
         handler.removeCallbacks(vigilarGrabacion)
         val archivo: File? = recorder.archivo
         val duracion = recorder.detener()
-        if (duracion > 0 && archivo != null) repo.agregar(archivo, prefs.carpetaVoz, duracion, porVoz = true)
+        if (duracion > 0 && archivo != null) repo.agregar(archivo, carpetaGrabacion, duracion, porVoz = true)
         reiniciarInactividad()
     }
 
@@ -306,11 +322,15 @@ class KeywordService : Service(), RecognitionListener {
 
     private fun liberar() {
         iniciado = false
-        handler.removeCallbacksAndMessages(null)
+        generacion++
+        // Solo quitamos nuestros temporizadores. NO usar removeCallbacksAndMessages(null):
+        // borraría el post de cargarModelo y el Model recién abierto nunca se cerraría.
+        handler.removeCallbacks(vigilarGrabacion)
+        handler.removeCallbacks(apagadoPorInactividad)
         if (recorder.grabando) {
             val archivo = recorder.archivo
             val d = recorder.detener()
-            if (d > 0 && archivo != null) repo.agregar(archivo, prefs.carpetaVoz, d, porVoz = true)
+            if (d > 0 && archivo != null) repo.agregar(archivo, carpetaGrabacion, d, porVoz = true)
         }
         detenerEscucha()
         model?.close()
@@ -362,6 +382,9 @@ class KeywordService : Service(), RecognitionListener {
             .setContentIntent(abrir)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            // Muestra la notificación al instante: el usuario debe saber que el micrófono está en uso.
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
         // Mientras graba por voz, un botón para cortar solo esa grabación y seguir escuchando
         if (::recorder.isInitialized && recorder.grabando) {
             val cortar = PendingIntent.getService(

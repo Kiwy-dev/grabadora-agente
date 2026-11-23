@@ -2,6 +2,7 @@ package com.grabadora.agente.agent
 
 import android.content.ComponentName
 import android.content.Context
+import android.os.Looper
 import android.service.quicksettings.TileService
 import androidx.lifecycle.MutableLiveData
 
@@ -16,7 +17,9 @@ object AgentState {
     val activo: Boolean get() = info.value?.estado?.let { it != Estado.APAGADO } ?: false
 
     fun publicar(context: Context, nuevo: InfoAgente) {
-        info.postValue(nuevo)
+        // En el hilo principal se asigna al instante: así `activo` nunca devuelve un valor viejo
+        // (con postValue había una ventana en la que se podía pulsar Grabar al arrancar el servicio).
+        if (Looper.myLooper() == Looper.getMainLooper()) info.value = nuevo else info.postValue(nuevo)
         // Pide al sistema que refresque el mosaico de ajustes rápidos
         TileService.requestListeningState(context, ComponentName(context, AgentTileService::class.java))
     }

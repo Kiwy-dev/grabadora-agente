@@ -8,6 +8,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Guarda los audios en el almacenamiento externo privado de la app (cap. 9:
@@ -19,7 +20,18 @@ class AudioRepository(context: Context) {
 
     companion object {
         const val CARPETA_GENERAL = "General"
-        private val NOMBRE_INVALIDO = Regex("""[\\/:*?"<>|]""")
+        private const val LARGO_MAXIMO = 100
+        private val NOMBRE_INVALIDO = Regex("""[\\/:*?"<>|\u0000-\u001F]""")
+
+        /**
+         * Nombre usable como carpeta o archivo: sin separadores de ruta ni caracteres
+         * reservados, sin empezar por punto (evita "..", ocultos) y con largo razonable.
+         * Es estático para que Prefs valide la carpeta de voz con la misma regla.
+         */
+        fun nombreValido(nombre: String) = nombre.isNotBlank() &&
+            nombre.length <= LARGO_MAXIMO &&
+            !nombre.startsWith(".") &&
+            !NOMBRE_INVALIDO.containsMatchIn(nombre)
     }
 
     private val db = AudioDbHelper(context)
@@ -28,8 +40,10 @@ class AudioRepository(context: Context) {
 
     /** Cambia cada vez que se modifica algo; la UI la observa para refrescarse. */
     val cambios = MutableLiveData(0)
+    private val contador = AtomicInteger()
 
-    private fun avisar() = cambios.postValue((cambios.value ?: 0) + 1)
+    // Se llama desde la UI y desde el servicio: el contador atómico no pierde avisos.
+    private fun avisar() = cambios.postValue(contador.incrementAndGet())
 
     fun dirCarpeta(nombre: String): File = File(base, nombre).apply { mkdirs() }
 
@@ -40,8 +54,6 @@ class AudioRepository(context: Context) {
         val nombres = base.listFiles()?.filter { it.isDirectory }?.map { it.name } ?: emptyList()
         return nombres.sortedWith(compareBy<String> { it != CARPETA_GENERAL }.thenBy { it.lowercase() })
     }
-
-    fun nombreValido(nombre: String) = nombre.isNotBlank() && !NOMBRE_INVALIDO.containsMatchIn(nombre)
 
     fun crearCarpeta(nombre: String): Boolean {
         val limpio = nombre.trim()
@@ -63,9 +75,10 @@ class AudioRepository(context: Context) {
 
     // ---------- Audios ----------
 
+    /** Archivo nuevo con fecha y hora; si ya existe uno en el mismo segundo, agrega " (2)". */
     fun nuevoArchivo(carpeta: String): File {
         val sello = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US).format(Date())
-        return File(dirCarpeta(carpeta), "Grabacion_$sello.m4a")
+        return archivoLibre(dirCarpeta(carpeta), "Grabacion_$sello.m4a")
     }
 
     fun agregar(archivo: File, carpeta: String, duracionMs: Long, porVoz: Boolean): Long {
@@ -101,13 +114,23 @@ class AudioRepository(context: Context) {
                 if (a.archivo.exists()) lista += a else perdidos += a.id
             }
         }
-        // Si el archivo se borró por fuera de la app, quitamos también su registro.
-        perdidos.forEach { db.writableDatabase.delete("audios", "_id = ?", arrayOf(it.toString())) }
+        // Si el archivo se borró por fuera de la app, quitamos también su registro (en una transacción).
+        if (perdidos.isNotEmpty()) {
+            val w = db.writableDatabase
+            w.beginTransaction()
+            try {
+                perdidos.forEach { w.delete("audios", "_id = ?", arrayOf(it.toString())) }
+                w.setTransactionSuccessful()
+            } finally {
+                w.endTransaction()
+            }
+        }
         return lista
     }
 
     fun borrar(audio: Audio): Boolean {
-        audio.archivo.delete()
+        // Si el archivo existe y no se pudo borrar, conservamos el registro para no dejarlo invisible.
+        if (audio.archivo.exists() && !audio.archivo.delete()) return false
         val n = db.writableDatabase.delete("audios", "_id = ?", arrayOf(audio.id.toString()))
         avisar()
         return n > 0
@@ -116,10 +139,12 @@ class AudioRepository(context: Context) {
     fun mover(audio: Audio, carpetaDestino: String): Boolean {
         if (carpetaDestino == audio.carpeta) return true
         val destino = archivoLibre(dirCarpeta(carpetaDestino), audio.archivo.name)
+        // renameTo falla entre sistemas de archivos distintos; entonces copiamos y borramos.
+        // Si la copia o el borrado del original fallan, quitamos la copia: nunca dos ejemplares.
         val movido = audio.archivo.renameTo(destino) || runCatching {
             audio.archivo.copyTo(destino)
-            audio.archivo.delete()
-        }.isSuccess
+            check(audio.archivo.delete()) { "No se pudo borrar el original" }
+        }.onFailure { destino.delete() }.isSuccess
         if (!movido) return false
         val v = ContentValues().apply {
             put("ruta", destino.absolutePath)

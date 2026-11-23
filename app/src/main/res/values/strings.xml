@@ -71,7 +71,6 @@
     <string name="ajustes">Ajustes</string>
     <string name="cat_palabra">Palabra clave</string>
     <string name="pref_palabra">Palabra o frase</string>
-    <string name="pref_palabra_resumen">Usa palabras comunes en español; 2 o 3 palabras dan menos falsos positivos.</string>
     <string name="pref_carpeta_voz">Carpeta para grabaciones por voz</string>
     <string name="cat_grabacion">Grabación</string>
     <string name="pref_silencio">Detener tras silencio de</string>
