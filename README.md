@@ -6,7 +6,7 @@ App Android que graba audios, los organiza en carpetas y puede **activarse con u
 Está hecha en Kotlin con vistas XML clásicas, siguiendo *El gran libro de Android*
 (Tomás Gironés y Tirado Gil, 8.ª ed.). Los comentarios del código dicen de qué capítulo sale cada técnica.
 
-> **Estado:** compila, pasa lint y ya se probó en un teléfono real.
+> **Estado:** la 0.3 se probó en un teléfono real. La 0.4 (revisión de código del 22-11-2026) compila y pasa lint; falta probarla en teléfono.
 
 ---
 
@@ -16,6 +16,7 @@ Está hecha en Kotlin con vistas XML clásicas, siguiendo *El gran libro de Andr
 GrabadoraAgente/
 ├─ app/                                ← código fuente
 ├─ scripts/descargar-modelo.ps1        ← descarga el modelo de voz (solo para compilar)
+├─ docs/DOCUMENTACION-TECNICA.md       ← arquitectura, flujo del agente, datos y revisión de código
 ├─ README.md                           ← este archivo
 └─ AGENTS.md                           ← guía para asistentes de IA que trabajen en el código
 ```
@@ -27,7 +28,7 @@ GrabadoraAgente/
 Requisitos: un teléfono con **Android 8.0 o superior**.
 
 **Opción A: copiando el APK al teléfono**
-1. Descarga `GrabadoraAgente-0.3-debug.apk` de la sección **Releases** del repositorio y pásalo al teléfono (por cable, Drive, WhatsApp, etc.).
+1. Descarga `GrabadoraAgente-0.4-debug.apk` de la sección **Releases** del repositorio y pásalo al teléfono (por cable, Drive, WhatsApp, etc.).
 2. Ábrelo desde el gestor de archivos.
 3. Si Android lo bloquea, permite **"Instalar apps desconocidas"** para esa app y vuelve a abrirlo.
 
@@ -35,7 +36,7 @@ Requisitos: un teléfono con **Android 8.0 o superior**.
 1. En el teléfono activa **Opciones de desarrollador → Depuración USB** y conéctalo por cable.
 2. Ejecuta:
    ```
-   adb install -r GrabadoraAgente-0.3-debug.apk
+   adb install -r GrabadoraAgente-0.4-debug.apk
    ```
 
 > Es una versión *debug* firmada con una clave de desarrollo. Sirve para probar y compartir,
@@ -151,4 +152,7 @@ que funciona sin internet y está limitado a una gramática cerrada (solo la fra
 | No reacciona a la palabra clave | Habla claro y cerca. Prueba con otra frase común en Ajustes. Revisa que el estado diga "Escuchando". |
 | Se apaga sola | Es lo esperado: inactividad, batería baja o cargador desconectado. El motivo aparece debajo del interruptor. |
 | "Apaga la escucha antes de grabar a mano" | El micrófono solo lo puede usar una cosa a la vez. Apaga el interruptor y vuelve a grabar. |
-| El mosaico no arranca la escucha | Abre la app una vez y concede el permiso de micrófono. |
+| El mosaico no arranca la escucha | Abre la app una vez y concede el permiso de micrófono. Con el teléfono bloqueado, el mosaico pide desbloquearlo primero. |
+| "Android no permitió iniciar la escucha" | Android 12+ no deja abrir el micrófono con la app en segundo plano. Abre la app y usa el interruptor. |
+
+Más detalle técnico (arquitectura, datos, decisiones y pendientes) en [`docs/DOCUMENTACION-TECNICA.md`](docs/DOCUMENTACION-TECNICA.md).

@@ -13,6 +13,7 @@ sin internet y graba automáticamente. Su prioridad es **no estar activa 24/7**.
 - Paquete / applicationId: `com.grabadora.agente`
 - minSdk 26 · targetSdk/compileSdk 35 · AGP 8.7.3 · Kotlin 2.0.21 · Gradle 8.10.2 (wrapper)
 - Interfaz y comentarios **en español**.
+- Documentación técnica completa: `docs/DOCUMENTACION-TECNICA.md` (actualízala si cambias el flujo, los datos o los ajustes).
 - El código sigue *El gran libro de Android* (8.ª ed.). Los comentarios `Cap. N` señalan de qué
   capítulo sale cada técnica. Mantén ese estilo didáctico.
 
@@ -84,12 +85,22 @@ app/src/main/java/com/grabadora/agente/
 8. **Iconos de notificación y del mosaico** (`ic_mic`, `ic_stop`) **sin** `android:tint="?attr/..."`: la
    bandeja del sistema no resuelve atributos del tema. En los layouts usa `app:tint`, porque lint marca
    error con `android:tint`.
-9. **No subas versiones** de AGP, Kotlin ni Gradle por tu cuenta. Gradle 9 y AGP 9 cambian bastante cosas.
+9. **Nombres de carpeta y archivo** siempre pasan por `AudioRepository.nombreValido` (también la carpeta de voz
+   en `Prefs`). Nada de rutas armadas con texto del usuario sin validar.
+10. **Disco y SQLite fuera del hilo principal** en la UI: `MainActivity.recargar()` usa el hilo `io`. La lista es
+    un `ListAdapter`: actualízala con `submitList`, no con `notifyDataSetChanged`.
+11. **Servicio:** `liberar()` solo quita sus propios `Runnable`; no uses `removeCallbacksAndMessages(null)` (perdería
+    el aviso de `cargarModelo` y el `Model` nativo quedaría abierto). La carga lleva un número de `generacion`.
+12. **Base de datos:** `onUpgrade` nunca borra la tabla; agrega migraciones por versión.
+13. **Respaldo desactivado** (`allowBackup="false"` + `data_extraction_rules.xml`). No lo actives: son grabaciones de voz.
+14. **No subas versiones** de AGP, Kotlin ni Gradle por tu cuenta. Gradle 9 y AGP 9 cambian bastante cosas.
    Las dependencias de librerías sí se pueden actualizar si compila y lint pasa.
 
 ## Pendientes / ideas
 
-- Reducir el APK compilando solo para `arm64-v8a` (`ndk { abiFilters += "arm64-v8a" }`).
 - Exportar o copiar audios a una carpeta pública (MediaStore) para que no se pierdan al desinstalar.
 - Tests unitarios para `AudioRepository` (mover, renombrar, nombres duplicados).
 - Firma de release para distribuir fuera de debug.
+- Registrar o limpiar `.m4a` huérfanos (proceso muerto durante una grabación).
+- Umbral de silencio configurable (hoy fijo en 1500).
+- Ver la tabla completa de pendientes en `docs/DOCUMENTACION-TECNICA.md` §8.2.
