@@ -4,6 +4,9 @@
     <style name="Theme.Grabadora" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">#C2185B</item>
         <item name="colorSecondary">#6A1B9A</item>
+        <!-- Android 15 dibuja la app detrás de la barra de estado: íconos oscuros en tema claro
+             y claros en tema oscuro, para que la hora y la batería se vean. -->
+        <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
     </style>
     <color name="icono_fondo">#C2185B</color>
 </resources>

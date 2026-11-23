@@ -1,7 +1,7 @@
-# AGENTS.md
+# Guía de desarrollo
 
-Guía para asistentes de IA (Claude Code, Codex, Copilot, etc.) que trabajen en este repositorio.
-Las instrucciones para personas están en `README.md`.
+Reglas y decisiones para quien modifique el código de este repositorio.
+Las instrucciones de instalación y uso están en `README.md`.
 
 ## Proyecto
 
@@ -25,6 +25,7 @@ sin internet y graba automáticamente. Su prioridad es **no estar activa 24/7**.
 ./gradlew lintDebug            # debe terminar sin errores (los avisos se toleran)
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb logcat -s KeywordService   # logs del servicio de palabra clave
+python3 scripts/capturas.py    # regenera docs/capturas/ (emulador "grabadora" o teléfono conectado)
 ```
 
 Modelo de voz (no está en el repo, está en `.gitignore`):
@@ -103,4 +104,4 @@ app/src/main/java/com/grabadora/agente/
 - Firma de release para distribuir fuera de debug.
 - Registrar o limpiar `.m4a` huérfanos (proceso muerto durante una grabación).
 - Umbral de silencio configurable (hoy fijo en 1500).
-- Ver la tabla completa de pendientes en `docs/DOCUMENTACION-TECNICA.md` §8.2.
+- Ver la tabla completa de pendientes en `docs/DOCUMENTACION-TECNICA.md` §9.2.

@@ -1,8 +1,8 @@
 # Grabadora Agente — Documentación técnica
 
-**Versión del código:** 0.4 (`versionCode 4`) · **Paquete:** `com.grabadora.agente` · **Actualizado:** 22-11-2026
+**Versión del código:** 0.4.1 (`versionCode 5`) · **Paquete:** `com.grabadora.agente` · **Actualizado:** 22-11-2026
 
-Documento de referencia para quien mantenga la app. Para instalarla y usarla, ver [`README.md`](../README.md). Para reglas de trabajo con asistentes de IA, ver [`AGENTS.md`](../AGENTS.md). La versión formal en Word (APA) está en `docs/Documentacion-Grabadora-Agente.docx` y corresponde a la 0.3.
+Documento de referencia para quien mantenga la app. Para instalarla y usarla, ver [`README.md`](../README.md). Para las reglas de desarrollo, ver [`CONTRIBUTING.md`](../CONTRIBUTING.md). La versión formal en Word (APA) está en `docs/Documentacion-Grabadora-Agente.docx` y corresponde a la 0.3.
 
 Las rutas de código son relativas a `app/src/main/java/com/grabadora/agente/`.
 
@@ -34,9 +34,24 @@ App Android que graba audio, lo organiza en carpetas y puede activarse con una f
 | ABIs empaquetadas | `arm64-v8a`, `armeabi-v7a`, `x86_64` |
 | Tamaño del APK debug | ~94 MB (0.3: ~104 MB) |
 
+## 2. Pantallas
+
+Capturas tomadas en el emulador (Android 15) con `scripts/capturas.py`.
+
+![Inicio sin audios](capturas/01-inicio-vacia.png)
+![Grabación manual en curso](capturas/02-grabando.png)
+![Lista de la carpeta General](capturas/03-lista-general.png)
+![Menú de cada audio](capturas/04-menu-audio.png)
+![Mover a otra carpeta](capturas/05-mover-a-carpeta.png)
+![Carpeta Trabajo](capturas/06-carpeta-trabajo.png)
+![Modo agente escuchando](capturas/07-escuchando.png)
+![Notificación del modo agente](capturas/08-notificacion.png)
+![Menú principal](capturas/09-menu-principal.png)
+![Ajustes](capturas/10-ajustes.png)
+
 ---
 
-## 2. Arquitectura
+## 3. Arquitectura
 
 ```
                  ┌──────────────────────────── AudioApp (Application) ─────────────────────────┐
@@ -63,7 +78,7 @@ App Android que graba audio, lo organiza en carpetas y puede activarse con una f
 | Agente | `agent/` | Servicio, estado global, ajustes, modelo, mosaico |
 | UI | `ui/` | Pantalla principal, adaptador de la lista, ajustes |
 
-**Reglas de diseño que no se deben romper** (detalle en `AGENTS.md`):
+**Reglas de diseño que no se deben romper** (detalle en `CONTRIBUTING.md`):
 
 1. **Un solo dueño del micrófono.** Vosk y `MediaRecorder` no pueden usarlo a la vez: el servicio llama a `detenerEscucha()` antes de grabar. La grabación manual se bloquea mientras `AgentState.activo` sea verdadero.
 2. **Nada de 24/7:** `START_NOT_STICKY`, sin `BOOT_COMPLETED`, apagado por inactividad, batería y cargador.
@@ -72,9 +87,9 @@ App Android que graba audio, lo organiza en carpetas y puede activarse con una f
 
 ---
 
-## 3. Modo agente
+## 4. Modo agente
 
-### 3.1 Máquina de estados
+### 4.1 Máquina de estados
 
 ```
 APAGADO ──► PREPARANDO ──► ESCUCHANDO ⇄ GRABANDO
@@ -86,7 +101,7 @@ cualquier estado ──► APAGADO  (usuario, inactividad, batería baja, cargad
 
 El estado vive en `AgentState.info` (LiveData) y lo leen la pantalla principal, el mosaico y la notificación.
 
-### 3.2 Flujo paso a paso
+### 4.2 Flujo paso a paso
 
 1. **Activación.** Interruptor (`MainActivity.activarEscucha`), mosaico (`AgentTileService` → `ArmarActivity`; si el teléfono está bloqueado pide desbloquear primero) o notificación. Se piden `RECORD_AUDIO` y, en Android 13+, `POST_NOTIFICATIONS` (opcional). Si Android niega el servicio en primer plano, la app avisa en lugar de cerrarse.
 2. **Arranque** (`onStartCommand`): `startForeground` con tipo `MICROPHONE`. Si ya estaba activo, se vuelve a llamar (lo exige Android tras cada `startForegroundService`). Si "Solo mientras se carga" está activo y no hay cargador, se apaga.
@@ -98,7 +113,7 @@ El estado vive en `AgentState.info` (LiveData) y lo leen la pantalla principal, 
 8. **Cierre.** Se registra el audio en la carpeta fijada al empezar y se vuelve a escuchar (o a pausa si la pantalla está apagada).
 9. **Apagado** (`apagar` → `liberar`): guarda la grabación en curso, detiene Vosk, cierra el modelo, quita receptores y notificación.
 
-### 3.3 Apagado y pausa automáticos
+### 4.3 Apagado y pausa automáticos
 
 | Evento | Condición | Efecto |
 |---|---|---|
@@ -109,7 +124,7 @@ El estado vive en `AgentState.info` (LiveData) y lo leen la pantalla principal, 
 | Temporizador | `minutos_inactividad` > 0 sin grabar por voz | Apaga (también corre durante la pausa por pantalla) |
 | Error de Vosk o del modelo | — | Apaga con el motivo visible en la tarjeta |
 
-### 3.4 Modelo de voz (`ModeloManager`)
+### 4.4 Modelo de voz (`ModeloManager`)
 
 - Copia `assets/model-es` a `filesDir/model-es` (respaldo: almacenamiento externo de la app).
 - **Copia atómica:** escribe en `model-es.tmp`, verifica el tamaño de cada archivo contra el APK y solo entonces renombra. El `uuid` se copia al final.
@@ -119,9 +134,9 @@ El estado vive en `AgentState.info` (LiveData) y lo leen la pantalla principal, 
 
 ---
 
-## 4. Datos
+## 5. Datos
 
-### 4.1 SQLite — `audios.db` (versión 1)
+### 5.1 SQLite — `audios.db` (versión 1)
 
 ```sql
 CREATE TABLE audios (
@@ -137,7 +152,7 @@ CREATE TABLE audios (
 
 **Migraciones:** `onUpgrade` ya no borra la tabla. Al subir la versión hay que agregar un paso por versión (`if (oldVersion < 2) ALTER TABLE ...`). Borrar la tabla dejaría los `.m4a` en disco sin registro e invisibles.
 
-### 4.2 Disco
+### 5.2 Disco
 
 ```
 Android/data/com.grabadora.agente/files/Music/Grabaciones/
@@ -150,7 +165,7 @@ Android/data/com.grabadora.agente/files/Music/Grabaciones/
 
 Respaldo si no hay almacenamiento externo: `filesDir/Grabaciones/`. `res/xml/file_paths.xml` cubre ambas rutas para `FileProvider`.
 
-### 4.3 Reglas del repositorio
+### 5.3 Reglas del repositorio
 
 | Operación | Comportamiento |
 |---|---|
@@ -165,7 +180,7 @@ Respaldo si no hay almacenamiento externo: `filesDir/Grabaciones/`. `res/xml/fil
 
 ---
 
-## 5. Manifiesto y permisos
+## 6. Manifiesto y permisos
 
 | Permiso | Para qué |
 |---|---|
@@ -188,7 +203,7 @@ Respaldo si no hay almacenamiento externo: `filesDir/Grabaciones/`. `res/xml/fil
 
 ---
 
-## 6. Ajustes
+## 7. Ajustes
 
 | Clave | Defecto | Efecto |
 |---|---|---|
@@ -204,9 +219,10 @@ Respaldo si no hay almacenamiento externo: `filesDir/Grabaciones/`. `res/xml/fil
 
 ---
 
-## 7. Compilar y publicar
+## 8. Compilar y publicar
 
 ```bash
+python3 scripts/capturas.py                       # regenera las capturas de docs/capturas/
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17     # macOS con Homebrew
 ./gradlew assembleDebug                           # app/build/outputs/apk/debug/app-debug.apk
 ./gradlew lintDebug                               # debe terminar sin errores
@@ -220,11 +236,11 @@ Los APK se publican en **Releases** de GitHub (no en el repo: `apk/` y `*.apk` e
 
 ---
 
-## 8. Revisión de código (22-11-2026)
+## 9. Revisión de código (22-11-2026)
 
 Se revisaron los 14 archivos Kotlin, el manifiesto y los recursos. Resultado: `assembleDebug` y `lintDebug` pasan; lint solo deja 3 avisos menores que ya existían (`ObsoleteSdkInt`, `Overdraw`, `SetTextI18n`).
 
-### 8.1 Corregido en 0.4
+### 9.1 Corregido en 0.4
 
 | # | Área | Problema | Corrección |
 |---|---|---|---|
@@ -246,7 +262,7 @@ Se revisaron los 14 archivos Kotlin, el manifiesto y los recursos. Resultado: `a
 | 16 | Notificación | Sin categoría; Android podía retrasarla hasta 10 s | `CATEGORY_SERVICE` + `FOREGROUND_SERVICE_IMMEDIATE` |
 | 17 | Limpieza | Cadena `pref_palabra_resumen` sin uso | Eliminada |
 
-### 8.2 Pendiente (no se cambió)
+### 9.2 Pendiente (no se cambió)
 
 | Riesgo | Detalle | Sugerencia |
 |---|---|---|
@@ -262,7 +278,7 @@ Se revisaron los 14 archivos Kotlin, el manifiesto y los recursos. Resultado: `a
 
 ---
 
-## 9. Problemas comunes
+## 10. Problemas comunes
 
 | Síntoma | Causa probable | Qué hacer |
 |---|---|---|
@@ -275,10 +291,11 @@ Se revisaron los 14 archivos Kotlin, el manifiesto y los recursos. Resultado: `a
 
 ---
 
-## 10. Historial
+## 11. Historial
 
 | Versión | Fecha | Cambios |
 |---|---|---|
 | 0.1 | 10-11-2026 | Primera versión: grabación, carpetas, modo agente con `StorageService` de Vosk |
 | 0.3 | 16-11-2026 | `ModeloManager` (copia atómica, verificación, reintento), diagnóstico, botón para cortar la grabación por voz |
-| 0.4 | 22-11-2026 | Revisión de código: privacidad del respaldo, validación de carpeta de voz, fugas y carreras del servicio, E/S fuera del hilo principal, APK más ligero (ver sección 8.1) |
+| 0.4.1 | 22-11-2026 | La hora y la batería de la barra de estado no se veían en tema claro (íconos blancos sobre fondo claro en Android 15); capturas automáticas con `scripts/capturas.py` |
+| 0.4 | 22-11-2026 | Revisión de código: privacidad del respaldo, validación de carpeta de voz, fugas y carreras del servicio, E/S fuera del hilo principal, APK más ligero (ver sección 9.1) |
