@@ -2,7 +2,7 @@
 
 **Versión del código:** 0.4.1 (`versionCode 5`) · **Paquete:** `com.grabadora.agente` · **Actualizado:** 22-11-2026
 
-Documento de referencia para quien mantenga la app. Para instalarla y usarla, ver [`README.md`](../README.md). Para las reglas de desarrollo, ver [`CONTRIBUTING.md`](../CONTRIBUTING.md). La versión formal en Word (APA) está en `docs/Documentacion-Grabadora-Agente.docx` y corresponde a la 0.3.
+Documento de referencia para quien mantenga la app. Para instalarla y usarla, ver [`README.md`](../README.md). Para las reglas de desarrollo, ver [`CONTRIBUTING.md`](../CONTRIBUTING.md). La versión formal en Word (APA) está en `docs/Documentacion-Grabadora-Agente.docx`: su texto corresponde a la 0.3 e incluye las capturas de la 0.4.1 (Figuras 1 a 3, sección "Interfaz de usuario").
 
 Las rutas de código son relativas a `app/src/main/java/com/grabadora/agente/`.
 
